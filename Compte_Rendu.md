@@ -1,22 +1,35 @@
-.🚀 Rapport de Modélisation Prédictive et Classification Algorithmique📝 Présentation du ProjetCe dépôt constitue une étude approfondie des capacités de l'apprentissage automatique (Machine Learning) appliqué à deux domaines distincts : la finance boursière avec le cas de Maroc Telecom (IAM) et la classification de données biologiques et botaniques. L'approche adoptée privilégie la précision statistique et la robustesse des modèles à travers des pipelines de traitement de données rigoureux et une sélection méticuleuse d'algorithmes de pointe.📉 Partie 1 : Prédiction Boursière — Dossier IAM S8Cette section se concentre sur l'analyse et la prédiction du cours de clôture de l'action Maroc Telecom. L'enjeu majeur ici est de transformer une série temporelle brute en un signal prédictible en tenant compte de la volatilité intrinsèque du marché marocain.🧪 Ingénierie des Caractéristiques (Feature Engineering)Le pipeline de données ne se limite pas aux prix d'ouverture et de fermeture ; il intègre des indicateurs mathématiques avancés via la bibliothèque ta (Technical Analysis) :Indice de Force Relative (RSI) : Cet oscillateur calcule le rapport entre les hausses et les baisses moyennes sur une période donnée pour déterminer si l'action est en zone de surachat ou de survente, fournissant ainsi une variable cruciale pour capter les retournements de tendance.Moyennes Mobiles Exponentielles (EMA) : Contrairement aux moyennes simples, les EMA accordent plus de poids aux données récentes, permettant au modèle de réagir plus rapidement aux nouvelles fluctuations du marché.Bandes de Bollinger : Elles permettent d'intégrer la notion de volatilité en mesurant l'écart-type autour d'une moyenne mobile, ce qui aide le modèle à identifier les phases de compression ou d'explosion des prix.💻 Analyse du Modèle Champion : Gradient BoostingLe modèle retenu pour cette mission est le Gradient Boosting Regressor. Cet algorithme fonctionne par une construction itérative d'arbres de décision où chaque nouvel arbre est spécifiquement entraîné pour prédire et corriger l'erreur résiduelle (le gradient de la fonction de perte) commise par l'ensemble des arbres précédents.Python# Implémentation du modèle de régression par Gradient Boosting
+# 📊 Rapport de Modélisation Prédictive et Classification Algorithmique
+
+## 📝 Présentation du Projet
+Ce dépôt constitue une étude approfondie des capacités de l'apprentissage automatique (**Machine Learning**) appliqué à deux domaines distincts : la finance boursière avec le cas de **Maroc Telecom (IAM)** et la classification de données biologiques et botaniques. L'approche adoptée privilégie la précision statistique et la robustesse des modèles à travers des pipelines de traitement de données rigoureux et une sélection méticuleuse d'algorithmes de pointe.
+
+---
+
+## 📉 Partie 1 : Prédiction Boursière — Dossier IAM S8
+
+Cette section se concentre sur l'analyse et la prédiction du cours de clôture de l'action Maroc Telecom. L'enjeu majeur ici est de transformer une série temporelle brute en un signal prédictible en tenant compte de la volatilité intrinsèque du marché marocain.
+
+### 🧪 Ingénierie des Caractéristiques (Feature Engineering)
+Le pipeline de données ne se limite pas aux prix d'ouverture et de fermeture ; il intègre des indicateurs mathématiques avancés via la bibliothèque `ta` (Technical Analysis) :
+
+* **Indice de Force Relative (RSI) :** Cet oscillateur calcule le rapport entre les hausses et les baisses moyennes sur une période donnée pour déterminer si l'action est en zone de surachat ou de survente, fournissant ainsi une variable cruciale pour capter les retournements de tendance.
+* **Moyennes Mobiles Exponentielles (EMA) :** Contrairement aux moyennes simples, les EMA accordent plus de poids aux données récentes, permettant au modèle de réagir plus rapidement aux nouvelles fluctuations du marché.
+* **Bandes de Bollinger :** Elles permettent d'intégrer la notion de volatilité en mesurant l'écart-type autour d'une moyenne mobile, ce qui aide le modèle à identifier les phases de compression ou d'explosion des prix.
+
+### 💻 Analyse du Modèle Champion : Gradient Boosting
+Le modèle retenu pour cette mission est le **Gradient Boosting Regressor**. Cet algorithme fonctionne par une construction itérative d'arbres de décision où chaque nouvel arbre est spécifiquement entraîné pour prédire et corriger l'erreur résiduelle (le gradient de la fonction de perte) commise par l'ensemble des arbres précédents.
+
+$$Loss = \sum (y_i - \hat{y}_i)^2$$
+
+```python
+# Implémentation du modèle de régression par Gradient Boosting
 from sklearn.ensemble import GradientBoostingRegressor
 
-# On initialise le modèle avec des paramètres favorisant la convergence
+# Initialisation du modèle avec des paramètres favorisant la convergence
 model_iam = GradientBoostingRegressor(
     n_estimators=100,  # Le modèle va construire 100 arbres successifs
-    learning_rate=0.1, # Facteur d'échelle appliqué à chaque arbre pour réguler l'apprentissage
-    max_depth=3,       # Profondeur limitée pour assurer une généralisation optimale sans mémoriser le bruit
+    learning_rate=0.1, # Facteur d'échelle appliqué à chaque arbre
+    max_depth=3,       # Profondeur limitée pour assurer une généralisation optimale
     random_state=42    # Garantit la reproductibilité des résultats
 )
 model_iam.fit(X_train, y_train)
-📊 Synthèse des Résultats StatistiquesLes performances enregistrées lors de la phase de test démontrent une efficacité exceptionnelle du modèle, avec des erreurs résiduelles extrêmement faibles.Paramètre de PerformanceValeurInterprétation TechniqueCoefficient R²0.9996Le modèle capture 99.96% de la variabilité du cours de l'action, ce qui est proche de la perfection statistique.RMSE (Root Mean Square Error)0.2449 MADL'écart moyen pondéré entre la prédiction et la réalité est de seulement 0.24 Dirhams.MAE (Mean Absolute Error)0.1884 MADLa moyenne simple des erreurs absolues indique une précision chirurgicale pour les transactions quotidiennes.Prévision à long terme : Le modèle projette un cours cible de 108.82 MAD à un horizon de 60 jours, suggérant une phase de consolidation stable.🧬 Partie 2 : Algorithmes de Classification et ValidationLe fichier algorithmes_corrigés.ipynb sert de banc d'essai pour évaluer la capacité de modèles supervisés à classifier des données complexes (Dataset Iris et Breast Cancer).🧠 Le Perceptron Multicouche (MLP)Le Multi-Layer Perceptron est une architecture de réseau de neurones artificiels organisée en couches successives (entrée, couches cachées, sortie). Chaque neurone applique une combinaison linéaire suivie d'une fonction d'activation non-linéaire (ReLU ou Sigmoïde).Performance : Sur le dataset Iris, le modèle a atteint une Accuracy de 1.0 (100%). Cette réussite prouve que les couches cachées ont réussi à extraire des frontières de décision parfaites pour distinguer les différentes espèces de fleurs.⚡ Boosting Adaptatif : AdaBoostL'algorithme AdaBoost (Adaptive Boosting) repose sur le principe de l'apprentissage d'ensemble. Il combine plusieurs classifieurs "faibles" (généralement des arbres de décision très simples appelés stumps) pour former un classifieur "fort".Pythonfrom sklearn.ensemble import AdaBoostClassifier
-
-# Configuration d'AdaBoost pour la classification binaire
-ada = AdaBoostClassifier(
-    n_estimators=100, # Succession de 100 classifieurs faibles
-    learning_rate=0.5, # Poids de contribution de chaque classifieur
-    random_state=42
-)
-ada.fit(X_bc_tr, y_bc_tr)
-Mécanisme technique : À chaque étape de l'entraînement, AdaBoost augmente le poids des instances qui ont été mal classées par l'arbre précédent. Cela force l'arbre suivant à se focaliser spécifiquement sur les cas les plus difficiles à prédire, augmentant ainsi la robustesse globale du système face aux anomalies de données.🛠 Structure Technique et VisualisationsPour faciliter l'analyse visuelle des résultats, plusieurs graphiques ont été générés :IAM_01_Analyse_Technique.png : Superposition des prix réels et des indicateurs techniques (RSI/Moyennes).IAM_03_Comparaison_Modeles.png : Histogramme comparatif mettant en évidence la supériorité du Gradient Boosting sur la Forêt Aléatoire et la Régression Linéaire.IAM_04_Predictions_Futures.png : Visualisation de la trajectoire prédictive étendue à 60 jours.Dépendances requisesPour exécuter les notebooks, installez les paquets suivants :Bashpip install pandas numpy matplotlib scikit-learn ta seaborn
-📌 ConclusionCe projet illustre l'efficacité des méthodes d'ensemble (Boosting) pour la gestion de données financières complexes. La précision obtenue sur le titre Maroc Telecom démontre qu'avec un feature engineering adéquat, le Machine Learning devient un outil d'aide à la décision indispensable. Les travaux sur les réseaux de neurones (MLP) et AdaBoost complètent cette étude en confirmant la polyvalence des modèles supervisés pour la classification diagnostique et botanique.Rapport élaboré pour la documentation technique du Projet S8.
