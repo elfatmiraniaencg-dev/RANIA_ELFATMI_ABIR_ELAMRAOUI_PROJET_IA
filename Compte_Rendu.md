@@ -33,3 +33,45 @@ model_iam = GradientBoostingRegressor(
     random_state=42    # Garantit la reproductibilité des résultats
 )
 model_iam.fit(X_train, y_train)
+
+
+
+
+# 📊 Synthèse des Résultats Statistiques
+
+Les performances enregistrées lors de la phase de test démontrent une efficacité exceptionnelle du modèle, validant ainsi les choix architecturaux effectués durant la phase de conception :
+
+| Paramètre de Performance | Valeur | Interprétation Technique |
+| :--- | :--- | :--- |
+| **Coefficient R²** | **0.9996** | Le modèle capture 99.96% de la variabilité du cours de l'action. |
+| **RMSE** | **0.2449 MAD** | Écart moyen pondéré entre la prédiction et la réalité terrain. |
+| **MAE** | **0.1884 MAD** | Précision chirurgicale pour les transactions boursières quotidiennes. |
+
+> **Prévision à long terme :** Le modèle projette un cours cible de **108.82 MAD** à un horizon de 60 jours, offrant une visibilité stratégique sur l'évolution du titre.
+
+---
+
+# 🧬 Partie 2 : Algorithmes de Classification et Validation
+
+Le fichier `algorithmes_corrigés.ipynb` sert de banc d'essai pour évaluer la capacité des modèles supervisés à classifier des structures de données complexes.
+
+### 🧠 Le Perceptron Multicouche (MLP)
+Le **Multi-Layer Perceptron** est une architecture de réseau de neurones artificiels organisée en couches successives (Entrée, Cachée, Sortie). Chaque neurone applique une combinaison linéaire des entrées suivie d'une fonction d'activation non-linéaire (ex: ReLU ou Sigmoïde).
+
+* **Performance :** Sur le dataset de référence *Iris*, le modèle a atteint une **Accuracy de 1.0 (100%)**, démontrant une séparation parfaite des classes.
+
+
+
+### ⚡ Boosting Adaptatif : AdaBoost
+L'algorithme **AdaBoost** repose sur le principe de l'apprentissage d'ensemble. Il combine plusieurs classifieurs "faibles" (*stumps*) pour converger vers un classifieur "fort" et robuste.
+
+```python
+from sklearn.ensemble import AdaBoostClassifier
+
+# Configuration d'AdaBoost pour la classification binaire (ex: Breast Cancer)
+ada = AdaBoostClassifier(
+    n_estimators=100, 
+    learning_rate=0.5, 
+    random_state=42
+)
+ada.fit(X_bc_tr, y_bc_tr)
