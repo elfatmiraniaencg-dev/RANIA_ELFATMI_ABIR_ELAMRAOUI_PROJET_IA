@@ -1,0 +1,556 @@
+# 📊 Rapport d'Analyse Boursière — Maroc Telecom (IAM)
+### Bourse de Casablanca (BVC) | Devise : MAD
+### Projet de Fin de Semestre 8 — Ingénierie des Algorithmes & Machine Learning
+
+---
+
+## Table des matières
+
+1. [Introduction générale](#1-introduction-générale)
+2. [Présentation du projet](#2-présentation-du-projet)
+3. [Source de données](#3-source-de-données)
+4. [Indicateurs techniques calculés](#4-indicateurs-techniques-calculés)
+5. [Signaux techniques](#5-signaux-techniques)
+6. [Modèles de machine learning](#6-modèles-de-machine-learning)
+7. [Métriques de performance des modèles](#7-métriques-de-performance-des-modèles)
+8. [Prévisions à 60 jours](#8-prévisions-à-60-jours)
+9. [Visualisations générées](#9-visualisations-générées)
+10. [Statistiques de risque](#10-statistiques-de-risque)
+11. [Conclusion générale](#11-conclusion-générale)
+12. [Avertissement](#12-avertissement)
+
+---
+
+## 1. Introduction générale
+
+### Contexte
+
+Les marchés financiers constituent un terrain d'application privilégié pour les techniques d'analyse de données et d'apprentissage automatique. La prédiction du cours d'un titre boursier est un problème complexe, influencé par une multitude de facteurs : fondamentaux économiques, psychologie des investisseurs, liquidité du marché, actualités sectorielles et macroéconomiques. Dans ce contexte, l'**analyse technique** — qui s'appuie exclusivement sur les données historiques de prix et de volumes — offre un cadre rigoureux et quantifiable pour caractériser le comportement passé d'un titre et en extrapoler les tendances à court terme.
+
+Ce rapport présente une étude approfondie du titre **Maroc Telecom (IAM)**, leader des télécommunications au Maroc et acteur majeur de la Bourse de Casablanca (BVC). Le choix de ce titre se justifie par sa **forte liquidité**, sa **capitalisation boursière significative** et son rôle de valeur de référence sur le marché marocain.
+
+### Problématique
+
+> Comment exploiter les indicateurs techniques et les algorithmes de régression supervisée pour modéliser et anticiper l'évolution du cours de l'action Maroc Telecom (IAM) sur un horizon de 60 jours ouvrés ?
+
+### Objectifs du rapport
+
+Ce rapport vise à :
+- Décrire et justifier le choix des **indicateurs techniques** utilisés pour caractériser la dynamique du titre
+- Présenter les **8 modèles de régression** entraînés et comparer leurs performances
+- Interpréter les **signaux de trading** générés sur la dernière séance disponible
+- Évaluer les **risques** associés à l'investissement dans ce titre
+- Formuler des **prévisions** à court terme sur la base du meilleur modèle sélectionné
+
+---
+
+## 2. Présentation du projet
+
+### Vue d'ensemble
+
+Ce projet, développé en **Python**, s'inscrit dans une démarche d'application des méthodes de machine learning à la finance quantitative. Il s'articule autour de trois grandes étapes : la **préparation des données**, le **calcul d'indicateurs techniques**, et la **modélisation prédictive**.
+
+L'approche combine :
+- Le calcul de **10 indicateurs techniques** classiques utilisés en analyse boursière, tous implémentés manuellement sans dépendance externe à des librairies spécialisées
+- L'entraînement et la comparaison de **8 modèles de régression supervisée**, allant de la régression linéaire simple aux méthodes d'ensemble avancées
+- La **prévision du cours** sur un horizon de **60 jours ouvrés** à partir du meilleur modèle sélectionné
+- La génération de **6 figures de visualisation** professionnelles couvrant l'analyse technique, les comparaisons de modèles et les prévisions futures
+
+### Stack technique
+
+| Composant | Librairie | Rôle |
+|-----------|-----------|------|
+| Traitement des données | `pandas`, `numpy` | Chargement, nettoyage, calcul des indicateurs |
+| Visualisation | `matplotlib` | Génération des 6 figures PNG |
+| Machine Learning | `scikit-learn` | Modèles, prétraitement, métriques |
+| Lecture fichiers | `openpyxl` | Import du fichier Excel source |
+
+---
+
+## 3. Source de données
+
+### Description du fichier
+
+| Paramètre | Valeur |
+|-----------|--------|
+| **Fichier** | `Maroc_Telecom_IAM_Cours_Journaliers.xlsx` |
+| **Feuille** | `Cours Journaliers` (en-tête à la ligne 3) |
+| **Colonnes** | Date, Open, High, Low, Close, Volume, Change_pct, MarketCap |
+| **Marché** | Bourse de Casablanca (BVC) |
+| **Devise** | Dirham marocain (MAD) |
+
+### Commentaire sur les données
+
+Les données utilisées sont des **cours journaliers OHLCV** (Open, High, Low, Close, Volume), format standard en analyse technique. Chaque ligne représente une **séance boursière** et contient :
+
+- **Open / High / Low / Close** : les quatre prix fondamentaux qui définissent la "bougie" de la séance. Le cours de clôture (`Close`) est la variable cible de notre modélisation, car c'est la référence officielle retenue par les marchés pour valoriser les positions.
+- **Volume** : le nombre de titres échangés sur la séance. Le volume est un indicateur clé de la **conviction du marché** : une hausse accompagnée de volumes élevés est plus significative qu'une hausse dans un marché peu liquide.
+- **Change_pct** : la variation journalière en pourcentage, utile pour le calcul des rendements.
+- **MarketCap** : la capitalisation boursière du titre à la clôture de chaque séance.
+
+### Étapes de nettoyage
+
+Les données brutes nécessitent plusieurs traitements avant d'être exploitables :
+
+```
+1. Conversion des dates → format datetime pandas (nécessaire pour les graphiques temporels)
+2. Suppression des lignes incomplètes → sur Open, High, Low, Close (données fondamentales)
+3. Remplacement des volumes manquants → par 0 (séances sans échange enregistré)
+4. Tri chronologique → ordre croissant pour le calcul des séries temporelles
+5. Réinitialisation de l'index → évite des erreurs d'indexation dans les calculs roulants
+```
+
+> 💡 **Pourquoi ce nettoyage est crucial ?** Les indicateurs techniques comme les moyennes mobiles ou le RSI utilisent des **fenêtres glissantes** sur les données historiques. Une seule valeur manquante non traitée peut propager des `NaN` sur toute la série et fausser l'ensemble des calculs.
+
+---
+
+## 4. Indicateurs techniques calculés
+
+### Introduction à l'analyse technique
+
+L'analyse technique repose sur l'hypothèse que **l'historique des prix et des volumes contient toute l'information nécessaire** pour anticiper les mouvements futurs d'un titre. Contrairement à l'analyse fondamentale qui s'intéresse aux résultats financiers et à la valeur intrinsèque de l'entreprise, l'analyse technique cherche à identifier des **patterns récurrents** dans les graphiques de cours.
+
+Les 10 indicateurs retenus dans ce projet couvrent trois grandes familles : les **indicateurs de tendance**, les **indicateurs de momentum** et les **indicateurs de volatilité/volume**.
+
+---
+
+### 4.1 Moyennes Mobiles — Indicateurs de tendance
+
+Les moyennes mobiles lissent les fluctuations journalières pour révéler la **tendance de fond** du titre. Elles sont l'outil de base de tout analyste technique.
+
+| Indicateur | Paramètre | Description | Utilité |
+|------------|-----------|-------------|---------|
+| **SMA 20** | Fenêtre 20j | Moyenne arithmétique des 20 dernières clôtures | Tendance court terme (~1 mois) |
+| **SMA 50** | Fenêtre 50j | Moyenne arithmétique des 50 dernières clôtures | Tendance moyen terme (~2,5 mois) |
+| **SMA 200**| Fenêtre 200j | Moyenne arithmétique des 200 dernières clôtures | Tendance long terme (~10 mois) |
+| **EMA 12** | Span 12j | Moyenne pondérée exponentiellement, faveur aux données récentes | Court terme réactif |
+| **EMA 26** | Span 26j | Moyenne pondérée exponentiellement | Moyen terme réactif |
+
+**Commentaire d'interprétation :**
+
+- Quand le prix est **au-dessus de la SMA200**, le titre est en **tendance haussière longue** et les acheteurs dominent structurellement. En dessous, c'est l'inverse.
+- Le **croisement SMA20/SMA50** (appelé "Golden Cross" quand la SMA20 passe au-dessus de la SMA50) est l'un des signaux les plus suivis par les traders institutionnels pour confirmer un retournement de tendance.
+- Les **EMA** (moyennes exponentielles) réagissent plus rapidement aux variations récentes que les SMA, ce qui les rend plus adaptées aux marchés volatils. L'EMA12 et l'EMA26 sont les composantes de base du MACD.
+
+---
+
+### 4.2 Bandes de Bollinger — Indicateur de volatilité de prix
+
+```
+BB_mid = SMA(Close, 20)
+BB_up  = SMA(Close, 20) + 2 × écart-type(Close, 20)
+BB_dn  = SMA(Close, 20) − 2 × écart-type(Close, 20)
+```
+
+**Commentaire d'interprétation :**
+
+Les bandes de Bollinger encadrent statistiquement **95% des variations de prix** dans un régime de marché normal (propriété de la loi normale à ±2σ). Elles s'élargissent en période de forte volatilité et se resserrent quand le marché est calme (phénomène appelé "Bollinger Squeeze").
+
+- **Prix proche de la bande supérieure** : le titre est relativement cher par rapport à sa volatilité récente → signal de surachat, risque de correction
+- **Prix proche de la bande inférieure** : le titre est relativement bon marché → signal de survente, opportunité potentielle d'achat
+- **Squeeze** (bandes très proches) : précède souvent un mouvement de forte amplitude, dont la direction reste à confirmer par d'autres indicateurs
+
+---
+
+### 4.3 RSI — Relative Strength Index
+
+```
+RSI = 100 − 100 / (1 + Moyenne_gains / Moyenne_pertes)   [sur 14 jours]
+```
+
+**Commentaire d'interprétation :**
+
+Le RSI mesure la **vitesse et l'amplitude des mouvements de prix** sur une échelle de 0 à 100. C'est l'un des indicateurs les plus utilisés pour détecter les excès de marché :
+
+- **RSI > 70** : Le titre a monté trop vite, il est en **zone de surachat**. Les vendeurs sont susceptibles de reprendre la main. Signal de prudence ou de prise de bénéfices.
+- **RSI < 30** : Le titre a chuté trop rapidement, il est en **zone de survente**. Une reprise technique est possible. Signal d'opportunité d'achat potentielle.
+- **RSI entre 30 et 70** : Zone neutre, pas de signal directionnel fort.
+- **Divergence RSI/prix** : Si le prix fait un nouveau sommet mais que le RSI ne confirme pas, cela signale un **essoufflement de la tendance** — signal avancé très fiable.
+
+---
+
+### 4.4 MACD — Moving Average Convergence Divergence
+
+```
+MACD    = EMA(12) − EMA(26)
+Signal  = EMA(MACD, 9)
+Histogramme = MACD − Signal
+```
+
+**Commentaire d'interprétation :**
+
+Le MACD est un indicateur de **momentum de tendance** qui mesure la convergence ou la divergence entre deux moyennes mobiles exponentielles. Il se compose de trois éléments :
+
+- **La ligne MACD** : reflète la dynamique à court terme par rapport au moyen terme
+- **La ligne Signal** : lissage du MACD, agit comme déclencheur de signaux
+- **L'histogramme** : visualise l'écart entre MACD et Signal. Quand il diminue, la dynamique s'affaiblit.
+
+Les **signaux de trading** générés par le MACD :
+- **Croisement haussier** (MACD franchit Signal vers le haut) : signal d'achat
+- **Croisement baissier** (MACD franchit Signal vers le bas) : signal de vente
+- **Croisement de la ligne zéro** : confirme le changement de tendance dominant
+
+---
+
+### 4.5 Oscillateur Stochastique
+
+```
+%K = 100 × (Close − Plus_bas_14j) / (Plus_haut_14j − Plus_bas_14j)
+%D = SMA(%K, 3)
+```
+
+**Commentaire d'interprétation :**
+
+L'oscillateur stochastique mesure la **position du cours de clôture dans la plage des prix** des 14 dernières séances. Il part du principe que dans une tendance haussière, les cours tendent à clôturer proche du plus haut, et dans une tendance baissière proche du plus bas.
+
+- **%K > 80** : Surachat — le cours clôture systématiquement près de ses plus hauts récents
+- **%K < 20** : Survente — le cours clôture systématiquement près de ses plus bas récents
+- **Croisement %K/%D** : signal de trading précis, particulièrement en zones extrêmes
+
+---
+
+### 4.6 Williams %R
+
+```
+%R = −100 × (Plus_haut_14j − Close) / (Plus_haut_14j − Plus_bas_14j)
+```
+
+**Commentaire d'interprétation :**
+
+Le Williams %R est très proche du stochastique mais présenté de manière inversée (valeurs entre −100 et 0). Il mesure la **proximité du cours avec le plus haut** de la période d'observation :
+
+- **%R > −20** : Zone de surachat → signal de vente potentiel
+- **%R < −80** : Zone de survente → signal d'achat potentiel
+
+Sa principale valeur ajoutée est sa **réactivité** : il capte très rapidement les renversements de tendance à court terme, ce qui en fait un bon outil de confirmation.
+
+---
+
+### 4.7 CCI — Commodity Channel Index
+
+```
+TP = (High + Low + Close) / 3
+CCI = (TP − SMA(TP, 20)) / (0.015 × Déviation_moyenne(TP, 20))
+```
+
+**Commentaire d'interprétation :**
+
+Le CCI mesure **l'écart du prix typique par rapport à sa moyenne mobile**, normalisé par la déviation moyenne. Initialement conçu pour les matières premières, il est aujourd'hui largement utilisé sur tous types d'actifs :
+
+- **CCI > +100** : Le titre est en tendance haussière forte, au-dessus de sa "valeur normale"
+- **CCI < −100** : Le titre est en tendance baissière forte, sous sa "valeur normale"
+- **Valeurs entre −100 et +100** : Phase de consolidation ou de range
+
+---
+
+### 4.8 ATR — Average True Range
+
+```
+True Range = max(High−Low, |High−Close_préc.|, |Low−Close_préc.|)
+ATR = Moyenne_mobile(True Range, 14)
+```
+
+**Commentaire d'interprétation :**
+
+L'ATR est l'**indicateur de référence pour mesurer la volatilité** d'un actif. Contrairement aux indicateurs de momentum qui donnent une direction, l'ATR ne donne aucun signal directionnel — il mesure uniquement l'**amplitude des mouvements**.
+
+Applications pratiques :
+- **Dimensionnement des stops-loss** : un stop placé à 1,5× ATR offre un niveau de protection cohérent avec la volatilité actuelle du titre
+- **Comparaison de la volatilité** : un ATR croissant signale une intensification des mouvements (souvent associé à une période d'incertitude ou de fort momentum)
+- Sur IAM : ATR > 2 MAD est considéré comme élevé et recommande une gestion du risque renforcée
+
+---
+
+### 4.9 OBV — On-Balance Volume
+
+```
+OBV_t = OBV_{t−1} + Volume_t  si Close_t > Close_{t−1}
+OBV_t = OBV_{t−1} − Volume_t  si Close_t < Close_{t−1}
+```
+
+**Commentaire d'interprétation :**
+
+L'OBV est un indicateur de **flux de volume cumulé** qui met en relation les mouvements de prix avec le volume échangé. L'idée centrale est que le **volume précède le prix** : un titre dont l'OBV monte alors que le cours stagne indique une accumulation silencieuse par des investisseurs avisés, présageant une hausse future.
+
+- **OBV croissant avec prix croissant** : confirmation de la tendance haussière
+- **OBV décroissant avec prix croissant** : divergence baissière, signe de distribution
+- **OBV croissant avec prix stable** : accumulation en cours, signal précurseur d'une hausse
+
+---
+
+## 5. Signaux techniques
+
+### Interprétation des signaux sur la dernière séance
+
+Les signaux ci-dessous sont générés automatiquement à partir des valeurs des indicateurs sur la **dernière séance disponible dans les données**. Ils constituent un résumé de la situation technique instantanée du titre IAM.
+
+> 💡 **Méthode de lecture :** Ces signaux doivent être lus dans leur **ensemble** et non isolément. Un seul signal haussier ou baissier ne suffit pas à justifier une décision. La **convergence de plusieurs signaux dans la même direction** renforce la fiabilité de l'analyse.
+
+| Indicateur | Condition | Signal | Interprétation |
+|------------|-----------|--------|----------------|
+| **RSI (14)** | > 70 | 🔴 SURACHAT | Le titre a monté trop vite — risque de correction à surveiller |
+| **RSI (14)** | < 30 | 🟢 SURVENTE | Excès de pessimisme — retour technique probable |
+| **RSI (14)** | 30–70 | 🟡 Neutre | Pas de signal directionnel fort — attendre la sortie de zone |
+| **MACD** | MACD > Signal | 🟢 Haussier | La dynamique de court terme accélère à la hausse |
+| **MACD** | MACD < Signal | 🔴 Baissier | Le momentum se retourne, pression vendeuse présente |
+| **Bollinger** | Close > BB_up | 🔴 Surachat | Prix en dehors des limites statistiques — mean reversion possible |
+| **Bollinger** | Close < BB_dn | 🟢 Survente | Prix anormalement bas — rebond technique probable |
+| **Bollinger** | Dans les bandes | 🟡 Neutre | Volatilité modérée — marché en phase de consolidation |
+| **SMA 50** | Close > SMA50 | 🟢 Tendance haussière | La tendance de fond sur 2,5 mois est positive |
+| **SMA 50** | Close < SMA50 | 🔴 Tendance baissière | La tendance de fond sur 2,5 mois est négative |
+| **Stoch %K** | > 80 | 🔴 Surachat | Cours clôturant systématiquement près des plus hauts |
+| **Stoch %K** | < 20 | 🟢 Survente | Cours clôturant systématiquement près des plus bas |
+| **Stoch %K** | 20–80 | 🟡 Neutre | Phase intermédiaire, pas de signal extrême |
+| **CCI (20)** | > 100 | 🟢 Forte tendance haussière | Prix nettement au-dessus de sa valeur "normale" |
+| **CCI (20)** | < −100 | 🔴 Forte tendance baissière | Prix nettement en dessous de sa valeur "normale" |
+| **CCI (20)** | −100 à 100 | 🟡 Neutre | Range — pas de tendance directionnelle forte |
+| **Williams %R** | > −20 | 🔴 Surachat | Cours proche de ses plus hauts sur 14j |
+| **Williams %R** | < −80 | 🟢 Survente | Cours proche de ses plus bas sur 14j |
+
+---
+
+## 6. Modèles de machine learning
+
+### Introduction à la modélisation prédictive
+
+La prédiction du cours d'un actif financier est formalisée ici comme un **problème de régression supervisée** : à partir d'un vecteur de features (indicateurs techniques de la séance), on cherche à prédire la valeur du cours de clôture `Close`.
+
+Le choix de 8 modèles distincts, de complexité croissante, permet de répondre à une question fondamentale : **quelle est la nature de la relation entre les indicateurs techniques et le cours ?** Est-elle linéaire, polynomiale, ou nécessite-t-elle un modèle non paramétrique ?
+
+### 6.1 Features utilisées
+
+```python
+FEATURES = ['t', 'SMA20', 'SMA50', 'EMA12', 'RSI', 'MACD', 'BB_up', 'BB_dn', 'ATR', 'Stoch_K']
+```
+
+| Feature | Type | Justification |
+|---------|------|---------------|
+| `t` | Index temporel | Capture la tendance temporelle globale du cours |
+| `SMA20` | Tendance court terme | Niveau moyen du cours récent — ancre de régression |
+| `SMA50` | Tendance moyen terme | Contexte de tendance plus large |
+| `EMA12` | Momentum court terme | Réactivité aux mouvements récents |
+| `RSI` | Momentum oscillateur | Niveau de surachat/survente — force relative |
+| `MACD` | Momentum de tendance | Divergence entre dynamiques court et moyen terme |
+| `BB_up` | Limite haute de volatilité | Résistance statistique |
+| `BB_dn` | Limite basse de volatilité | Support statistique |
+| `ATR` | Volatilité absolue | Amplitude des mouvements |
+| `Stoch_K` | Position dans le range | Localisation du cours dans sa plage récente |
+
+> 💡 **Commentaire sur la sélection des features :** Ces 10 variables couvrent les quatre dimensions clés de l'analyse technique : **tendance** (SMA, EMA), **momentum** (RSI, MACD, Stoch_K), **volatilité** (ATR, BB) et **positionnement temporel** (t). Cette combinaison vise à donner au modèle une image complète et non redondante de la dynamique du titre.
+
+**Prétraitement :** Toutes les features sont standardisées via `StandardScaler` (moyenne = 0, écart-type = 1) avant l'entraînement. Ceci est indispensable pour les modèles sensibles aux échelles (Ridge, Lasso, SVR).
+
+### 6.2 Modèles implémentés
+
+#### Modèles linéaires
+
+| Modèle | Paramètres | Commentaire |
+|--------|------------|-------------|
+| **Régression Linéaire** | Aucun | Modèle de référence (baseline). Suppose une relation strictement linéaire entre features et cours. Simple, interprétable, mais potentiellement trop restrictif pour des données financières. |
+| **Ridge (α=1.0)** | α = 1.0 | Régression linéaire avec pénalité L2. Réduit la variance en pénalisant les coefficients élevés — idéal quand les features sont corrélées (multicolinéarité) comme c'est souvent le cas entre SMA20 et EMA12. |
+| **Lasso (α=0.1)** | α = 0.1, max_iter=10 000 | Régression linéaire avec pénalité L1. Produit des solutions **parcimonieuses** en annulant les coefficients des features peu informatives — agit comme un sélecteur automatique de variables. |
+
+#### Modèles polynomiaux
+
+| Modèle | Paramètres | Commentaire |
+|--------|------------|-------------|
+| **Polynomiale deg. 2** | PolynomialFeatures(2) + LinReg | Ajoute les termes quadratiques et les interactions entre features. Permet de capturer des relations non linéaires du second ordre (par exemple, l'impact du RSI n'est pas uniforme selon le niveau de cours). |
+| **Polynomiale deg. 3** | PolynomialFeatures(3) + LinReg | Extension cubique. Plus expressive mais risque fort de **surapprentissage** (overfitting) si le nombre de séances est limité. À interpréter avec prudence. |
+
+#### Modèles à noyau et d'ensemble
+
+| Modèle | Paramètres | Commentaire |
+|--------|------------|-------------|
+| **SVR (RBF)** | kernel='rbf', C=100, ε=0.1 | Support Vector Regression avec noyau gaussien. Modélise des relations hautement non linéaires. Le paramètre C contrôle la tolérance aux erreurs (C élevé = faible tolérance = risque d'overfitting). Très performant sur des séries propres et bien normalisées. |
+| **Random Forest** | n_estimators=200, random_state=42 | Agrégation de 200 arbres de décision entraînés sur des sous-ensembles aléatoires (bagging). Robuste aux outliers, capture des interactions complexes, peu sensible aux hyperparamètres. Fournit en prime une mesure d'importance des variables. |
+| **Gradient Boosting** | n_estimators=200, random_state=42 | Construction séquentielle d'arbres, chaque arbre corrigeant les erreurs du précédent. Modèle généralement le plus précis sur des données tabulaires. Plus sensible à l'overfitting que le Random Forest, mais aussi plus puissant quand bien calibré. |
+
+---
+
+## 7. Métriques de performance des modèles
+
+### Métriques utilisées
+
+| Métrique | Formule | Unité | Interprétation |
+|----------|---------|-------|----------------|
+| **R²** | `1 − SS_res / SS_tot` | Sans unité [0–1] | Proportion de la variance expliquée. R²=1 : ajustement parfait. R²=0 : le modèle n'est pas meilleur qu'une constante. |
+| **MAE** | `mean(|y − ŷ|)` | MAD | Erreur moyenne absolue en dirhams. Facile à interpréter : c'est l'écart typique entre prédiction et réalité. |
+| **RMSE** | `√mean((y − ŷ)²)` | MAD | Comme le MAE mais pénalise davantage les **grandes erreurs**. Plus sensible aux outliers. |
+
+### Commentaire sur l'interprétation des scores
+
+> ⚠️ **Note méthodologique importante :** Dans ce projet, les modèles sont entraînés et évalués sur le **même jeu de données** (sans séparation train/test ni validation croisée). Les R² obtenus reflètent donc la qualité de l'**ajustement** (fitting) et non la capacité de **généralisation** du modèle. Des R² proches de 1 pour les modèles complexes (polynomiale deg. 3, RF, GB) peuvent indiquer du surapprentissage.
+
+**Grille d'interprétation du R² :**
+
+| Valeur R² | Interprétation |
+|-----------|----------------|
+| > 0.95 | Excellent ajustement (attention au surapprentissage pour les modèles complexes) |
+| 0.85 – 0.95 | Bon ajustement — modèle fiable |
+| 0.70 – 0.85 | Ajustement acceptable — des améliorations sont possibles |
+| < 0.70 | Ajustement insuffisant — le modèle ne capture pas bien la dynamique du titre |
+
+Le **meilleur modèle** est sélectionné automatiquement selon le score R² le plus élevé et utilisé pour les prévisions à 60 jours. En pratique, **Random Forest** et **Gradient Boosting** sont les candidats les plus probables au rang de meilleur modèle, en raison de leur capacité à modéliser des relations hautement non linéaires entre les indicateurs techniques.
+
+---
+
+## 8. Prévisions à 60 jours
+
+### Méthodologie de prévision
+
+- **Horizon :** 60 jours ouvrés (≈ 3 mois calendaires) à partir de la dernière séance
+- **Base de prévision :** Les valeurs des indicateurs techniques de la **dernière séance connue** sont gelées comme référence pour les 60 séances futures. Seul l'index temporel `t` évolue.
+- **Intervalles de confiance :** Deux enveloppes sont visualisées autour de la prévision centrale : ±5% et ±10%, représentant des scénarios de variation modérée et forte.
+
+### Commentaire sur la robustesse des prévisions
+
+Cette approche de prévision présente des **forces et des limites** qu'il convient d'expliciter :
+
+**Forces :**
+- Simple et transparente : la prévision est directement lisible et explicable
+- Le modèle capture les dynamiques historiques entre indicateurs et cours
+- L'intervalle de confiance donne une idée de la plage de variation plausible
+
+**Limites :**
+- **Hypothèse de stationnarité des features :** en gelant les valeurs des indicateurs, on suppose que la structure du marché ne change pas, ce qui est une simplification forte
+- **Horizon 60j :** au-delà de quelques semaines, la qualité prédictive des modèles financiers se dégrade rapidement en raison des **chocs exogènes** (décisions de Bank Al-Maghrib, résultats financiers, actualité géopolitique)
+- **Pas de données macroéconomiques :** l'absence de variables fondamentales (taux directeur, inflation, résultats trimestriels) limite la portée explicative des modèles
+
+> 📌 **Recommandation :** Utiliser cette prévision comme un **scénario de tendance centrale**, à croiser avec l'analyse fondamentale du titre et le contexte macroéconomique marocain pour une décision d'investissement éclairée.
+
+---
+
+## 9. Visualisations générées
+
+Le script génère **6 figures PNG** en haute résolution (150 dpi) avec un thème sombre professionnel (`#0d1117` — inspiré de GitHub Dark), optimisé pour la lisibilité des données financières.
+
+---
+
+### Figure 1 — Analyse Technique Principale
+**Fichier :** `IAM_01_Analyse_Technique.png`
+
+Cette figure à 5 sous-graphes superposés constitue le **tableau d'analyse technique complet** du titre :
+
+1. **Cours + Bollinger + SMA/EMA** : Vue d'ensemble de la tendance avec les supports/résistances dynamiques. Permet d'identifier d'un coup d'œil les phases de tendance, de consolidation et de breakout.
+2. **Volume** : Coloré en vert (séances haussières) et rouge (séances baissières). Permet de valider la conviction derrière chaque mouvement de prix.
+3. **RSI(14)** : Avec zones de surachat (>70) et survente (<30) en surbrillance. L'analyse des divergences RSI/prix est visible à l'œil nu.
+4. **MACD(12,26,9)** : Les croisements signal/MACD et les changements de signe de l'histogramme sont clairement visibles.
+5. **Stochastique(14,3)** : Les zones extrêmes >80 et <20 sont surlignées pour faciliter l'identification des retournements.
+
+---
+
+### Figure 2 — Indicateurs Complémentaires
+**Fichier :** `IAM_02_Indicateurs_Complementaires.png`
+
+Cette figure complète la Figure 1 avec 4 indicateurs additionnels qui apportent des perspectives différentes :
+
+1. **Williams %R** : Sensibilité aux retournements rapides de tendance — confirme ou infirme les signaux du stochastique.
+2. **CCI** : Mesure de l'écart par rapport à la valeur "normale" — utile pour les stratégies de retour à la moyenne.
+3. **ATR** : Évolution de la volatilité dans le temps — permet d'identifier les périodes calmes et les pics d'incertitude.
+4. **OBV** : Flux de volume cumulé — permet de détecter les phases d'accumulation et de distribution qui précèdent souvent les mouvements de prix.
+
+---
+
+### Figure 3 — Comparaison des 8 Modèles
+**Fichier :** `IAM_03_Comparaison_Modeles.png`
+
+Grille 4×2 présentant pour chaque modèle : le cours réel (bleu), le modèle ajusté (orange) et la prévision à 60j (violet). Le titre de chaque sous-graphe affiche le R², le RMSE et la tendance prévue. Cette figure permet une **comparaison visuelle immédiate** de la qualité d'ajustement de chaque approche.
+
+---
+
+### Figure 4 — Prédictions Futures (Meilleur Modèle)
+**Fichier :** `IAM_04_Predictions_Futures.png`
+
+Figure principale de prévision, focalisée sur les 120 derniers jours historiques + 60 jours futurs. Inclut :
+- Les intervalles de confiance ±5% et ±10%
+- L'annotation du cours actuel et de la cible à J+60
+- La ligne de démarcation "aujourd'hui" clairement matérialisée
+
+---
+
+### Figure 5 — Tableau de Bord
+**Fichier :** `IAM_05_Tableau_de_Bord.png`
+
+Dashboard synthétique en 6 panneaux :
+1. **R² par modèle** (barres horizontales colorées selon le seuil 0.9)
+2. **RMSE par modèle** (erreur en MAD)
+3. **Tendances à 60j par modèle** (vert = haussier, rouge = baissier)
+4. **Distribution des rendements journaliers** (histogramme avec moyenne)
+5. **Rendement mensuel moyen** (vue macroscopique de la saisonnalité)
+6. **Tableau des valeurs clés** (tous les indicateurs de la dernière séance en un coup d'œil)
+
+---
+
+### Figure 6 — Rapport de Synthèse
+**Fichier :** `IAM_06_Rapport_Synthese.png`
+
+Résumé exécutif visuel complet comprenant : résumé des performances du meilleur modèle, signaux techniques détaillés, statistiques de risque et avertissement légal. Conçu pour être partagé directement comme document de synthèse.
+
+---
+
+## 10. Statistiques de risque
+
+### Indicateurs de risque calculés
+
+| Indicateur | Description | Interprétation |
+|------------|-------------|----------------|
+| **ATR (14)** | Volatilité journalière absolue en MAD | ATR > 2 MAD = Élevée ; Nécessite une gestion du risque renforcée (stops plus larges) |
+| **Rendement moyen journalier** | `mean(Close.pct_change())` | Drift quotidien moyen du titre. Positif = tendance haussière structurelle |
+| **Volatilité annualisée** | `std(Return) × √252` | Standard en finance — permet de comparer le risque entre actifs. Une vol. > 25% est considérée élevée pour une blue chip |
+| **Gain max 1 jour** | `max(Return)` | Meilleure séance journalière — indique le potentiel de hausse extrême |
+| **Perte max 1 jour** | `min(Return)` | Pire séance journalière — indique le risque de baisse extrême (drawdown journalier maximum) |
+
+### Commentaire sur la gestion du risque
+
+La **volatilité annualisée** (`std × √252`) est l'indicateur de risque le plus utilisé en finance de marché. Elle permet de construire des intervalles de confiance pour les prévisions de cours :
+
+```
+Intervalle à 1 an (68% de confiance) : Cours ± (Cours × Volatilité_annualisée)
+```
+
+Le **drawdown maximum journalier** est particulièrement important pour les investisseurs qui utilisent un levier ou qui ont des contraintes de stop-loss strictes. Sur un titre comme IAM, ce chiffre reflète également la **réaction du marché aux chocs d'information** (résultats, annonces réglementaires, actualité du secteur télécom).
+
+---
+
+## 11. Conclusion générale
+
+### Bilan de l'analyse
+
+Ce projet a mis en œuvre une **pipeline complète d'analyse boursière quantitative** appliquée au titre Maroc Telecom (IAM), combinant analyse technique traditionnelle et machine learning moderne.
+
+**Sur le plan des indicateurs techniques**, la combinaison de 10 indicateurs couvrant les dimensions de tendance (SMA, EMA), de momentum (RSI, MACD, Stochastique, Williams %R, CCI) et de volatilité/volume (Bollinger, ATR, OBV) offre une **lecture multidimensionnelle** de la dynamique du titre. La convergence ou divergence de ces signaux sur la dernière séance donne une image immédiate de l'état du marché.
+
+**Sur le plan de la modélisation**, les 8 modèles de régression testés montrent que les **modèles d'ensemble** (Random Forest, Gradient Boosting) surpassent généralement les approches linéaires sur ce type de données, confirmant l'hypothèse que la relation entre indicateurs techniques et cours n'est pas purement linéaire. Toutefois, la prudence s'impose : un R² élevé en entraînement ne garantit pas de bonnes performances hors-échantillon.
+
+**Sur le plan des prévisions**, l'horizon de 60 jours est approprié pour une analyse de tendance de court à moyen terme. Les intervalles de confiance ±5% et ±10% encadrent un scénario central qui doit être interprété comme une **indication de direction** et non comme une certitude.
+
+### Perspectives d'amélioration
+
+Pour renforcer la robustesse de l'analyse, plusieurs pistes d'amélioration sont envisageables :
+
+1. **Validation croisée temporelle** (TimeSeriesSplit de sklearn) : pour évaluer la vraie capacité prédictive des modèles hors-échantillon et détecter le surapprentissage
+2. **Intégration de variables fondamentales** : résultats financiers trimestriels, taux directeur, indice MASI pour contexte macro
+3. **Modèles de séries temporelles** : ARIMA, SARIMA, ou modèles à mémoire longue (LSTM) pour capturer les autocorrélations temporelles ignorées par les modèles de régression classiques
+4. **Feature engineering avancé** : ratios entre indicateurs, features décalées (lagged features), encodage des patterns de chandeliers japonais
+5. **Backtesting d'une stratégie de trading** : transformer les signaux en décisions d'achat/vente et mesurer la performance simulée sur l'historique
+
+### Message final
+
+> L'analyse technique et le machine learning sont des **outils puissants d'aide à la décision**, mais ils ne remplacent pas le jugement humain ni la connaissance approfondie du secteur et du contexte macroéconomique. Maroc Telecom est une entreprise solide avec une position dominante sur le marché marocain, mais comme tout investissement boursier, son titre est soumis à des **risques de marché, de liquidité et de réglementation** qu'aucun modèle quantitatif ne peut pleinement anticiper.
+
+---
+
+## 12. Avertissement
+
+> ⚠️ **Cette analyse est réalisée à des fins exclusivement éducatives dans le cadre d'un projet académique de Semestre 8.**
+>
+> Elle **ne constitue pas** un conseil en investissement, une recommandation d'achat ou de vente, ni une analyse financière au sens réglementaire du terme. Les modèles de prévision présentés sont des outils d'apprentissage automatique appliqués à des données historiques, et leurs prédictions **ne garantissent en aucun cas** les performances futures du titre Maroc Telecom (IAM).
+>
+> Les résultats passés ne préjugent pas des résultats futurs. **Tout investissement en bourse comporte des risques de perte en capital, pouvant aller jusqu'à la perte totale des sommes investies.**
+>
+> Avant toute décision d'investissement, il est recommandé de consulter un conseiller financier agréé.
+
+---
+
+*Rapport généré à partir du code source `projet_iam_s8.py`*
+*Analyse Maroc Telecom (IAM) | Bourse de Casablanca (BVC) | Semestre 8*
