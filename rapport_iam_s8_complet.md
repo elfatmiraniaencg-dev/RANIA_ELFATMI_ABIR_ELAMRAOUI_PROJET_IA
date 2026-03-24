@@ -2,6 +2,16 @@
 ### Bourse de Casablanca (BVC) | Devise : MAD
 ### Projet de Fin de Semestre 8 — Ingénierie des Algorithmes & Machine Learning
 
+
+## RANIA EL FATMI
+<p align="center">
+  <img src="rania.jpeg" width="250">
+</p>
+
+## ABIR EL AMRAOUI
+<p align="center">
+  <img src="abir.jpeg" width="250">
+</p>
 ---
 
 ## Table des matières
