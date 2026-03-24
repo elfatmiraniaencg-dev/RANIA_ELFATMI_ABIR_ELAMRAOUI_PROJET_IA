@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="logo.png" width="250">
+</p>
+
 # 📊 Rapport d'Analyse Boursière — Maroc Telecom (IAM)
 ### Bourse de Casablanca (BVC) | Devise : MAD
 ### Projet de Fin de Semestre 8 — Ingénierie des Algorithmes & Machine Learning
@@ -13,6 +17,7 @@
   <img src="abir.jpeg" width="250">
 </p>
 ---
+
 
 ## Table des matières
 
